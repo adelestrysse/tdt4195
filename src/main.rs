@@ -51,6 +51,29 @@ fn offset<T>(n: u32) -> *const c_void {
 // Get a null pointer (equivalent to an offset of 0)
 // ptr::null()
 
+fn generate_circle(center_x: f32, center_y: f32, radius: f32, segments: u32) -> (Vec<f32>, Vec<u32>) {
+    let mut vertices: Vec<f32> = vec![center_x, center_y, 0.0];
+    let mut indices: Vec<u32> = vec![];
+
+    for i in 0..segments {
+        let angle = (i as f32 / segments as f32) * std::f32::consts::TAU;
+        let x = center_x + radius * angle.cos();
+        let y = center_y + radius * angle.sin();
+        vertices.push(x);
+        vertices.push(y);
+        vertices.push(0.0);
+    }
+
+    for i in 1..=segments {
+        let next = if i == segments { 1 } else { i + 1};
+        indices.push(0);
+        indices.push(i);
+        indices.push(next);
+    }
+
+    (vertices, indices)
+}
+
 
 // == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
@@ -105,7 +128,6 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     // * Fill it with data
     // * Return the ID of the VAO
 }
-
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -168,29 +190,31 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let vertices: Vec<f32> = vec![
-            -0.2, 0.0, 0.0,
-            0.2, 0.0, 0.0,
-            0.0, 0.346, 0.0,
-            0.4, 0.346, 0.0,
-            0.6, 0.0, 0.0,
-            -0.4, 0.346, 0.0,
-            -0.6, 0.0, 0.0,
-            -0.4, -0.346, 0.0,
-            0.0, -0.346, 0.0,
-            0.4, -0.346, 0.0,
-            -0.2, -0.692, 0.0,
-            0.2, -0.692, 0.0,
-        ];
+        // let vertices: Vec<f32> = vec![
+        //     -0.2, 0.0, 0.0,
+        //     0.2, 0.0, 0.0,
+        //     0.0, 0.346, 0.0,
+        //     0.4, 0.346, 0.0,
+        //     0.6, 0.0, 0.0,
+        //     -0.4, 0.346, 0.0,
+        //     -0.6, 0.0, 0.0,
+        //     -0.4, -0.346, 0.0,
+        //     0.0, -0.346, 0.0,
+        //     0.4, -0.346, 0.0,
+        //     -0.2, -0.692, 0.0,
+        //     0.2, -0.692, 0.0,
+        // ];
 
-        let indices: Vec<u32> = vec![
-            0, 1, 2,
-            1, 4, 3,
-            6, 0, 5,
-            7, 8, 0,
-            8, 9, 1,
-            10, 11, 8,
-        ];
+        // let indices: Vec<u32> = vec![
+        //     0, 1, 2,
+        //     1, 4, 3,
+        //     6, 0, 5,
+        //     7, 8, 0,
+        //     8, 9, 1,
+        //     10, 11, 8,
+        // ];
+
+        let (vertices, indices) = generate_circle(0.0, 0.0, 0.5, 60);
 
         let my_vao = unsafe { create_vao(&vertices, &indices) };
 
@@ -212,7 +236,11 @@ fn main() {
         
         unsafe {
             simple_shader.activate();
-        }
+        };
+
+        let time_loc = unsafe {
+            gl::GetUniformLocation(simple_shader.program_id, b"time\0".as_ptr() as *const i8)
+        };
 
 
         // Used to demonstrate keyboard handling for exercise 2.
@@ -277,6 +305,7 @@ fn main() {
                 gl::ClearColor(0.035, 0.046, 0.078, 1.0); // night sky
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+                gl::Uniform1f(time_loc, elapsed);
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(my_vao);
