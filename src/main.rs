@@ -269,6 +269,10 @@ fn main() {
             simple_shader.activate();
         };
 
+        let transform_loc = unsafe {
+            gl::GetUniformLocation(simple_shader.program_id, b"transform\0".as_ptr() as *const i8)
+        };
+
         let time_loc = unsafe {
             gl::GetUniformLocation(simple_shader.program_id, b"time\0".as_ptr() as *const i8)
         };
@@ -341,6 +345,9 @@ fn main() {
 
                 gl::Uniform1f(time_loc, elapsed);
                 gl::Uniform1f(animation_loc, elapsed.sin());
+
+                let transform: glm::Mat4 = glm::identity();
+                gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(my_vao);
