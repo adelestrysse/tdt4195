@@ -240,7 +240,6 @@ fn main() {
             1.0, 0.0, 0.0, 0.5,
             1.0, 0.0, 0.0, 0.5,
             1.0, 0.0, 0.0, 0.5, 
-            
             0.0, 0.0, 1.0, 0.5,
             0.0, 0.0, 1.0, 0.5,
             0.0, 0.0, 1.0, 0.5,
@@ -274,6 +273,9 @@ fn main() {
             gl::GetUniformLocation(simple_shader.program_id, b"time\0".as_ptr() as *const i8)
         };
 
+        let animation_loc = unsafe {
+            gl::GetUniformLocation(simple_shader.program_id, b"animation\0".as_ptr() as *const i8)
+        };
 
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
@@ -338,6 +340,7 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 gl::Uniform1f(time_loc, elapsed);
+                gl::Uniform1f(animation_loc, elapsed.sin());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(my_vao);
