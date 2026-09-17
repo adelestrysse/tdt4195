@@ -346,7 +346,15 @@ fn main() {
                 gl::Uniform1f(time_loc, elapsed);
                 gl::Uniform1f(animation_loc, elapsed.sin());
 
-                let transform: glm::Mat4 = glm::identity();
+                let aspect: f32 = window_aspect_ratio;
+                let fovy: f32 = 45.0f32.to_radians();
+                let near: f32 = 1.0;
+                let far: f32 = 100.0;
+
+                let projection: glm::Mat4 = glm::perspective(aspect, fovy, near, far);
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(0.0, 0.0, -10.0));
+
+                let transform: glm::Mat4 = projection * translation;
                 gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
