@@ -284,6 +284,12 @@ fn main() {
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
 
+        let mut camera_x: f32 = 0.0;
+        let mut camera_y: f32 = 0.0;
+        let mut camera_z: f32 = 5.0;
+        let mut camera_horizontal_angle: f32 = 0.0;
+        let mut camera_vertical_angle: f32 = 0.0;
+
 
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
@@ -313,11 +319,35 @@ fn main() {
                         // The `VirtualKeyCode` enum is defined here:
                         //    https://docs.rs/winit/0.25.0/winit/event/enum.VirtualKeyCode.html
 
-                        VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                        VirtualKeyCode::W => {
+                            camera_z -= 1.0 * delta_time;
                         }
-                        VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                        VirtualKeyCode::S => {
+                            camera_z += 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::A =>{
+                            camera_x -= 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::D =>{
+                            camera_x += 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::Space =>{
+                            camera_y += 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::LShift =>{
+                            camera_y -= 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::Left =>{
+                            camera_horizontal_angle -= 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::Right =>{
+                            camera_horizontal_angle += 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::Up =>{
+                            camera_vertical_angle += 1.0 * delta_time;
+                        }
+                        VirtualKeyCode::Down =>{
+                            camera_vertical_angle -= 1.0 * delta_time;
                         }
 
 
@@ -352,9 +382,11 @@ fn main() {
                 let far: f32 = 100.0;
 
                 let projection: glm::Mat4 = glm::perspective(aspect, fovy, near, far);
-                let translation: glm::Mat4 = glm::translation(&glm::vec3(0.0, 0.0, -10.0));
-
-                let transform: glm::Mat4 = projection * translation;
+                let horizontal_matrix: glm::Mat4 = glm::rotation(camera_horizontal_angle, &glm::vec3(0.0, 1.0, 0.0));
+                let vertical_matrix: glm::Mat4 = glm::rotation(camera_vertical_angle, &glm::vec3(1.0, 0.0, 0.0));
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(-camera_x, -camera_y, -camera_z));
+                let view: glm::Mat4 = translation * vertical_matrix * horizontal_matrix;
+                let transform: glm::Mat4 = projection * view;
                 gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
