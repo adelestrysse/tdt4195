@@ -14,6 +14,7 @@ use std::sync::{Mutex, Arc, RwLock};
 
 mod shader;
 mod util;
+mod mesh;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -76,7 +77,7 @@ fn generate_circle(center_x: f32, center_y: f32, radius: f32, segments: u32) -> 
 
 
 // == // Generate your VAO here
-unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
+unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>, normals: &Vec<f32>) -> u32 {
     // Implement me!
 
     // Also, feel free to delete comments :)
@@ -129,6 +130,29 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
         ptr::null(),
     );
     gl::EnableVertexAttribArray(1);
+
+    // Normal VBO
+    let mut normal_vbo: u32 = 0;
+    gl::GenBuffers(1, &mut normal_vbo);
+    gl::BindBuffer(gl::ARRAY_BUFFER, normal_vbo);
+
+    gl::BufferData(
+        gl::ARRAY_BUFFER,
+        byte_size_of_array(normals),
+        pointer_to_array(normals),
+        gl::STATIC_DRAW,
+    );
+
+    gl::VertexAttribPointer(
+        2,
+        3,
+        gl::FLOAT,
+        gl::FALSE,
+        3 * size_of::<f32>(),
+        ptr::null(),
+    );
+
+    gl::EnableVertexAttribArray(2);
 
     // Index buffer
     let mut ibo: u32 = 0;
@@ -215,39 +239,50 @@ fn main() {
         // == // Set up your VAO around here
 
         // vertices and indices that were used for drawing triangles in tasks 2a, b, d
-        let vertices: Vec<f32> = vec![
-            0.6, -0.8, 0.9,
-            0.0, 0.4, 0.9,
-            -0.8, -0.2, 0.9,
-            -0.4, 0.35, 0.0,
-            0.55, 0.35, 0.0,
-            0.42, -0.15, 0.0,
-            -0.3, 0.0, -0.9,
-            0.55, 0.4, -0.9,
-            0.42, 0.9, -0.9,
-        ];
+        // let vertices: Vec<f32> = vec![
+        //     0.6, -0.8, 0.9,
+        //     0.0, 0.4, 0.9,
+        //     -0.8, -0.2, 0.9,
+        //     -0.4, 0.35, 0.0,
+        //     0.55, 0.35, 0.0,
+        //     0.42, -0.15, 0.0,
+        //     -0.3, 0.0, -0.9,
+        //     0.55, 0.4, -0.9,
+        //     0.42, 0.9, -0.9,
+        // ];
 
-        let indices: Vec<u32> = vec![
-            0, 1, 2,
-            3, 5, 4,
-            6, 7, 8,
-        ];
+        // let indices: Vec<u32> = vec![
+        //     0, 1, 2,
+        //     3, 5, 4,
+        //     6, 7, 8,
+        // ];
 
-        let colors: Vec<f32> = vec![
-            0.0, 1.0, 0.0, 0.5,
-            0.0, 1.0, 0.0, 0.5,
-            0.0, 1.0, 0.0, 0.5,
-            1.0, 0.0, 0.0, 0.5,
-            1.0, 0.0, 0.0, 0.5,
-            1.0, 0.0, 0.0, 0.5, 
-            0.0, 0.0, 1.0, 0.5,
-            0.0, 0.0, 1.0, 0.5,
-            0.0, 0.0, 1.0, 0.5,
-        ];
+        // let colors: Vec<f32> = vec![
+        //     0.0, 1.0, 0.0, 0.5,
+        //     0.0, 1.0, 0.0, 0.5,
+        //     0.0, 1.0, 0.0, 0.5,
+        //     1.0, 0.0, 0.0, 0.5,
+        //     1.0, 0.0, 0.0, 0.5,
+        //     1.0, 0.0, 0.0, 0.5, 
+        //     0.0, 0.0, 1.0, 0.5,
+        //     0.0, 0.0, 1.0, 0.5,
+        //     0.0, 0.0, 1.0, 0.5,
+        // ];
 
         // let (vertices, indices) = generate_circle(0.0, 0.0, 0.5, 60);
 
-        let my_vao = unsafe { create_vao(&vertices, &indices, &colors) };
+        // let my_vao = unsafe { create_vao(&vertices, &indices, &colors) };
+
+        let terrain = mesh::Terrain::load("./resources/lunarsurface.obj");
+
+        let my_vao = unsafe {
+            create_vao(
+                &terrain.vertices,
+                &terrain.indices,
+                &terrain.colors,
+                &terrain.normals,
+            )
+        };
 
         // == // Set up your shaders here
 
@@ -379,7 +414,7 @@ fn main() {
                 let aspect: f32 = window_aspect_ratio;
                 let fovy: f32 = 45.0f32.to_radians();
                 let near: f32 = 1.0;
-                let far: f32 = 100.0;
+                let far: f32 = 1000.0;
 
                 let projection: glm::Mat4 = glm::perspective(aspect, fovy, near, far);
                 let horizontal_matrix: glm::Mat4 = glm::rotation(camera_horizontal_angle, &glm::vec3(0.0, 1.0, 0.0));
@@ -391,9 +426,7 @@ fn main() {
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(my_vao);
-                gl::DrawElements(gl::TRIANGLES, indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
-
-
+                gl::DrawElements(gl::TRIANGLES, terrain.index_count, gl::UNSIGNED_INT, ptr::null());
             }
 
             // Display the new color buffer on the display

@@ -1,9 +1,10 @@
 #version 430 core
 
 uniform float time;
-//out vec4 color;
 
 in vec4 vertex_color;
+in vec3 vertex_normal;
+
 out vec4 final_color;
 
 void main()
@@ -12,6 +13,10 @@ void main()
     //color = vec4(col, 1.0);
 
     //color = vec4(0.13f, 1.0f, 0.92f, 1.0f);
+
+    vec3 lightDirection = normalize(vec3(0.8, -0.5, 0.6));
+
+    float light = max(0.0, dot(vertex_normal, -lightDirection));
     
-    final_color = vertex_color;
+    final_color = vertex_color * light;
 }
