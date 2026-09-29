@@ -18,5 +18,9 @@ void main()
 
     float light = max(0.0, dot(vertex_normal, -lightDirection));
     
-    final_color = vertex_color * light;
+    //From task 1
+    //final_color = vertex_color * light;
+
+    //changed the final color to differentiate color on terrain and helicopter
+    final_color = vec4(vertex_color.rgb * light, vertex_color.a);
 }

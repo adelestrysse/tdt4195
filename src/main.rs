@@ -15,6 +15,9 @@ use std::sync::{Mutex, Arc, RwLock};
 mod shader;
 mod util;
 mod mesh;
+mod scene_graph;
+
+use scene_graph::SceneNode;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -177,6 +180,28 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>,
     // * Return the ID of the VAO
 }
 
+// draw SceneGraph
+unsafe fn draw_scene(
+    node: &scene_graph::SceneNode,
+    view_projection_matrix: &glm::Mat4,
+    transformation_so_far: &glm::Mat4,
+) {
+    if node.index_count >= 0 {
+        gl::BindVertexArray(node.vao_id);
+
+        gl::DrawElements(
+            gl::TRIANGLES,
+            node.index_count,
+            gl::UNSIGNED_INT,
+            ptr::null(),
+        );
+    }
+
+    for &child in &node.children {
+        draw_scene(&*child, view_projection_matrix, transformation_so_far);
+    }
+}
+
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
@@ -275,6 +300,8 @@ fn main() {
 
         let terrain = mesh::Terrain::load("./resources/lunarsurface.obj");
 
+        let helicopter = mesh::Helicopter::load("./resources/helicopter.obj");
+
         let my_vao = unsafe {
             create_vao(
                 &terrain.vertices,
@@ -283,6 +310,65 @@ fn main() {
                 &terrain.normals,
             )
         };
+
+        let helicopter_body_vao = unsafe {
+            create_vao(
+                &helicopter.body.vertices,
+                &helicopter.body.indices,
+                &helicopter.body.colors,
+                &helicopter.body.normals
+            )
+        };
+
+        let helicopter_door_vao = unsafe {
+            create_vao(
+                &helicopter.door.vertices,
+                &helicopter.door.indices,
+                &helicopter.door.colors,
+                &helicopter.door.normals,
+            )
+        };
+
+        let helicopter_main_rotor_vao = unsafe {
+            create_vao(
+                &helicopter.main_rotor.vertices,
+                &helicopter.main_rotor.indices,
+                &helicopter.main_rotor.colors,
+                &helicopter.main_rotor.normals,
+            )
+        };
+
+        let helicopter_tail_rotor_vao =  unsafe {
+            create_vao(
+                &helicopter.tail_rotor.vertices,
+                &helicopter.tail_rotor.indices,
+                &helicopter.tail_rotor.colors,
+                &helicopter.tail_rotor.normals,
+            )
+        };
+
+        // SceneGraphs
+        let mut terrain_node = SceneNode::from_vao(my_vao, terrain.index_count);
+
+        let mut helicopter_node = SceneNode::new();
+
+        let helicopter_body_node = SceneNode::from_vao(helicopter_body_vao, helicopter.body.index_count);
+        let helicopter_door_node = SceneNode::from_vao(helicopter_door_vao, helicopter.door.index_count);
+        let helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
+        let helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
+
+        //Setup Helicopter
+
+        helicopter_node.add_child(&*helicopter_body_node);
+        helicopter_node.add_child(&*helicopter_door_node);
+        helicopter_node.add_child(&*helicopter_main_rotor_node);
+        helicopter_node.add_child(&*helicopter_tail_rotor_node);
+
+        let mut root = SceneNode::new();
+
+        terrain_node.add_child(&*helicopter_node);
+
+        root.add_child(&*terrain_node);
 
         // == // Set up your shaders here
 
@@ -425,8 +511,27 @@ fn main() {
                 gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                gl::BindVertexArray(my_vao);
-                gl::DrawElements(gl::TRIANGLES, terrain.index_count, gl::UNSIGNED_INT, ptr::null());
+                // gl::BindVertexArray(my_vao);
+                // gl::DrawElements(gl::TRIANGLES, terrain.index_count, gl::UNSIGNED_INT, ptr::null());
+
+                // Helicopter
+                // gl::BindVertexArray(helicopter_body_vao);
+                // gl::DrawElements(gl::TRIANGLES, helicopter.body.index_count, gl::UNSIGNED_INT, ptr::null());
+
+                // gl::BindVertexArray(helicopter_door_vao);
+                // gl::DrawElements(gl::TRIANGLES, helicopter.door.index_count, gl::UNSIGNED_INT, ptr::null());
+
+                // gl::BindVertexArray(helicopter_main_rotor_vao);
+                // gl::DrawElements(gl::TRIANGLES, helicopter.main_rotor.index_count, gl::UNSIGNED_INT, ptr::null());
+
+                // gl::BindVertexArray(helicopter_tail_rotor_vao);
+                // gl::DrawElements(gl::TRIANGLES, helicopter.tail_rotor.index_count, gl::UNSIGNED_INT, ptr::null());
+
+                let identity = glm::identity();
+
+                unsafe {
+                    draw_scene(&*root, &transform, &identity,);
+                }
             }
 
             // Display the new color buffer on the display
