@@ -355,10 +355,11 @@ fn main() {
         let helicopter_body_node = SceneNode::from_vao(helicopter_body_vao, helicopter.body.index_count);
         let helicopter_door_node = SceneNode::from_vao(helicopter_door_vao, helicopter.door.index_count);
         let helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
-        let helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
+        let mut helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
 
+        helicopter_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+       
         //Setup Helicopter
-
         helicopter_node.add_child(&*helicopter_body_node);
         helicopter_node.add_child(&*helicopter_door_node);
         helicopter_node.add_child(&*helicopter_main_rotor_node);
