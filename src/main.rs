@@ -185,8 +185,34 @@ unsafe fn draw_scene(
     node: &scene_graph::SceneNode,
     view_projection_matrix: &glm::Mat4,
     transformation_so_far: &glm::Mat4,
+    transform_loc: i32,
 ) {
+    let translation = glm::translation(&node.position);
+
+    let rotation_x = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0));
+    let rotation_y = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0));
+    let rotation_z = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0));
+
+    let reference_to_origin = glm::translation(&(-node.reference_point));
+    let reference_back = glm::translation(&node.reference_point);
+
+    let current_transformation = transformation_so_far
+        * translation
+        * reference_back
+        * rotation_z
+        * rotation_y
+        * rotation_x
+        * reference_to_origin;
+
     if node.index_count >= 0 {
+        let mvp = view_projection_matrix * current_transformation;
+        gl::UniformMatrix4fv(
+            transform_loc,
+            1,
+            gl::FALSE,
+            mvp.as_ptr(),
+        );
+
         gl::BindVertexArray(node.vao_id);
 
         gl::DrawElements(
@@ -198,7 +224,7 @@ unsafe fn draw_scene(
     }
 
     for &child in &node.children {
-        draw_scene(&*child, view_projection_matrix, transformation_so_far);
+        draw_scene(&*child, view_projection_matrix, &current_transformation, transform_loc);
     }
 }
 
@@ -509,7 +535,7 @@ fn main() {
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(-camera_x, -camera_y, -camera_z));
                 let view: glm::Mat4 = translation * vertical_matrix * horizontal_matrix;
                 let transform: glm::Mat4 = projection * view;
-                gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
+                // gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 // gl::BindVertexArray(my_vao);
@@ -530,9 +556,11 @@ fn main() {
 
                 let identity = glm::identity();
 
-                unsafe {
-                    draw_scene(&*root, &transform, &identity,);
-                }
+                draw_scene(
+                    &*root, 
+                    &transform, 
+                    &identity, 
+                    transform_loc);
             }
 
             // Display the new color buffer on the display
