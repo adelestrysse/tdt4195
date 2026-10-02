@@ -32,6 +32,8 @@ const MAIN_ROTOR_SPIN: f32 = 5.0;
 const TAIL_ROTOR_SPIN: f32 = 20.0;
 const HELIPCOPTER_HEIGHT: f32 = 20.0; 
 
+
+const CAMERA_SPEED: f32 = 20.0;
 // == // Helper functions to make interacting with OpenGL a little bit prettier. You *WILL* need these! // == //
 
 // Get the size of an arbitrary array of numbers measured in bytes
@@ -492,22 +494,22 @@ fn main() {
                         //    https://docs.rs/winit/0.25.0/winit/event/enum.VirtualKeyCode.html
 
                         VirtualKeyCode::W => {
-                            camera_z -= 1.0 * delta_time;
+                            camera_z -= 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::S => {
-                            camera_z += 1.0 * delta_time;
+                            camera_z += 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::A =>{
-                            camera_x -= 1.0 * delta_time;
+                            camera_x -= 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::D =>{
-                            camera_x += 1.0 * delta_time;
+                            camera_x += 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::Space =>{
-                            camera_y += 1.0 * delta_time;
+                            camera_y += 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::LShift =>{
-                            camera_y -= 1.0 * delta_time;
+                            camera_y -= 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::Left =>{
                             camera_horizontal_angle -= 1.0 * delta_time;
