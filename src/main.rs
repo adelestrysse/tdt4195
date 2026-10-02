@@ -33,6 +33,10 @@ const TAIL_ROTOR_SPIN: f32 = 20.0;
 const HELIPCOPTER_HEIGHT: f32 = 20.0; 
 
 const CAMERA_SPEED: f32 = 100.0;
+
+const DOOR_SPEED: f32 = 5.0;
+const MAX_DOOR_OPENING: f32 = 1.8;
+
 // == // Helper functions to make interacting with OpenGL a little bit prettier. You *WILL* need these! // == //
 
 // Get the size of an arbitrary array of numbers measured in bytes
@@ -463,7 +467,7 @@ fn main() {
         let mut camera_horizontal_angle: f32 = 0.0;
         let mut camera_vertical_angle: f32 = 0.0;
 
-
+        let mut door_pos: f32 = 0.0;
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
         let mut previous_frame_time = first_frame_time;
@@ -522,6 +526,12 @@ fn main() {
                         VirtualKeyCode::Down =>{
                             camera_vertical_angle -= 1.0 * delta_time;
                         }
+                        VirtualKeyCode::O => {
+                            door_pos = (door_pos + DOOR_SPEED * delta_time).min(MAX_DOOR_OPENING);
+                        }
+                        VirtualKeyCode::C => {
+                            door_pos = (door_pos - DOOR_SPEED * delta_time).max(0.0);
+                        } 
 
 
                         // default handler:
@@ -542,11 +552,12 @@ fn main() {
 
             for (i, node) in helicopter_nodes.iter_mut().enumerate(){
                 let mut buffer: f32 = i as f32 * 1.5;
-                let heading = toolbox::simple_heading_animation(elapsed + buffer);
+                let heading = toolbox::simple_heading_animation(elapsed / 100.0 + buffer);
                 node.position = glm::vec3(heading.x, HELIPCOPTER_HEIGHT, heading.z);
                 node.rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
                 node[2].rotation.y = elapsed * MAIN_ROTOR_SPIN;
                 node[3].rotation.x = elapsed * TAIL_ROTOR_SPIN; 
+                node[1].position.z = door_pos;
             }
 
             unsafe {
