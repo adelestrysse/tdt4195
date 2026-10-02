@@ -206,9 +206,9 @@ unsafe fn draw_scene(
     let current_transformation = transformation_so_far
         * translation
         * reference_back
-        * rotation_z
         * rotation_y
         * rotation_x
+        * rotation_z
         * reference_to_origin;
 
     if node.index_count >= 0 {
