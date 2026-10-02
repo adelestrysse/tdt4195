@@ -386,27 +386,34 @@ fn main() {
             )
         };
 
+        let mut helicopter_nodes: Vec<scene_graph::Node> = Vec::new();
+
         // SceneGraphs
         let mut terrain_node = SceneNode::from_vao(my_vao, terrain.index_count);
 
-        let mut helicopter_node = SceneNode::new();
+        for _ in 0..5 {
+            let mut helicopter_node = SceneNode::new();
 
-        let helicopter_body_node = SceneNode::from_vao(helicopter_body_vao, helicopter.body.index_count);
-        let helicopter_door_node = SceneNode::from_vao(helicopter_door_vao, helicopter.door.index_count);
-        let mut helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
-        let mut helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
+            let helicopter_body_node = SceneNode::from_vao(helicopter_body_vao, helicopter.body.index_count);
+            let helicopter_door_node = SceneNode::from_vao(helicopter_door_vao, helicopter.door.index_count);
+            let mut helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
+            let mut helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
 
-        helicopter_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-       
-        //Setup Helicopter
-        helicopter_node.add_child(&*helicopter_body_node);
-        helicopter_node.add_child(&*helicopter_door_node);
-        helicopter_node.add_child(&*helicopter_main_rotor_node);
-        helicopter_node.add_child(&*helicopter_tail_rotor_node);
+            helicopter_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        
+            //Setup Helicopter
+            helicopter_node.add_child(&*helicopter_body_node);
+            helicopter_node.add_child(&*helicopter_door_node);
+            helicopter_node.add_child(&*helicopter_main_rotor_node);
+            helicopter_node.add_child(&*helicopter_tail_rotor_node);
+            
+            terrain_node.add_child(&*helicopter_node);
+            helicopter_nodes.push(helicopter_node);
+        }
 
         let mut root = SceneNode::new();
 
-        terrain_node.add_child(&*helicopter_node);
+        
 
         root.add_child(&*terrain_node);
 
@@ -531,11 +538,15 @@ fn main() {
             }
 
             // == // Please compute camera transforms here (exercise 2 & 3)
-            helicopter_main_rotor_node.rotation.y = elapsed * MAIN_ROTOR_SPIN; 
-            helicopter_tail_rotor_node.rotation.x = elapsed * TAIL_ROTOR_SPIN;
-            let heading = toolbox::simple_heading_animation(elapsed);
-            helicopter_node.position = glm::vec3(heading.x, HELIPCOPTER_HEIGHT, heading.z);
-            helicopter_node.rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
+
+            for (i, node) in helicopter_nodes.iter_mut().enumerate(){
+                let mut buffer: f32 = i as f32 * 1.5;
+                let heading = toolbox::simple_heading_animation(elapsed + buffer);
+                node.position = glm::vec3(heading.x, HELIPCOPTER_HEIGHT, heading.z);
+                node.rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
+                node[2].rotation.y = elapsed * MAIN_ROTOR_SPIN;
+                node[3].rotation.x = elapsed * TAIL_ROTOR_SPIN; 
+            }
 
             unsafe {
                 // Clear the color and depth buffers
