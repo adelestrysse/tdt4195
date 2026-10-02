@@ -515,16 +515,16 @@ fn main() {
                             camera_y -= 1.0 * delta_time * CAMERA_SPEED;
                         }
                         VirtualKeyCode::Left =>{
-                            camera_horizontal_angle -= 1.0 * delta_time;
+                            camera_horizontal_angle -= 2.0 * delta_time;
                         }
                         VirtualKeyCode::Right =>{
-                            camera_horizontal_angle += 1.0 * delta_time;
+                            camera_horizontal_angle += 2.0 * delta_time;
                         }
                         VirtualKeyCode::Up =>{
-                            camera_vertical_angle += 1.0 * delta_time;
+                            camera_vertical_angle += 2.0 * delta_time;
                         }
                         VirtualKeyCode::Down =>{
-                            camera_vertical_angle -= 1.0 * delta_time;
+                            camera_vertical_angle -= 2.0 * delta_time;
                         }
                         VirtualKeyCode::O => {
                             door_pos = (door_pos + DOOR_SPEED * delta_time).min(MAX_DOOR_OPENING);
@@ -552,7 +552,7 @@ fn main() {
 
             for (i, node) in helicopter_nodes.iter_mut().enumerate(){
                 let mut buffer: f32 = i as f32 * 1.5;
-                let heading = toolbox::simple_heading_animation(elapsed / 100.0 + buffer);
+                let heading = toolbox::simple_heading_animation(elapsed / 2.0 + buffer);
                 node.position = glm::vec3(heading.x, HELIPCOPTER_HEIGHT, heading.z);
                 node.rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
                 node[2].rotation.y = elapsed * MAIN_ROTOR_SPIN;
