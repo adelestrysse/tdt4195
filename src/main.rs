@@ -32,8 +32,7 @@ const MAIN_ROTOR_SPIN: f32 = 5.0;
 const TAIL_ROTOR_SPIN: f32 = 20.0;
 const HELIPCOPTER_HEIGHT: f32 = 20.0; 
 
-
-const CAMERA_SPEED: f32 = 20.0;
+const CAMERA_SPEED: f32 = 100.0;
 // == // Helper functions to make interacting with OpenGL a little bit prettier. You *WILL* need these! // == //
 
 // Get the size of an arbitrary array of numbers measured in bytes
