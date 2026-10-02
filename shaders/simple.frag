@@ -15,8 +15,8 @@ void main()
     //color = vec4(0.13f, 1.0f, 0.92f, 1.0f);
 
     vec3 lightDirection = normalize(vec3(0.8, -0.5, 0.6));
-
-    float light = max(0.0, dot(vertex_normal, -lightDirection));
+    vec3 normalized = normalize(vertex_normal);
+    float light = max(0.0, dot(normalized, -lightDirection));
     
     //From task 1
     //final_color = vertex_color * light;

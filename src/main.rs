@@ -17,6 +17,8 @@ mod util;
 mod mesh;
 mod scene_graph;
 
+mod toolbox; 
+
 use scene_graph::SceneNode;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
@@ -25,6 +27,10 @@ use glutin::event_loop::ControlFlow;
 // initial window size
 const INITIAL_SCREEN_W: u32 = 800;
 const INITIAL_SCREEN_H: u32 = 600;
+
+const MAIN_ROTOR_SPIN: f32 = 5.0;
+const TAIL_ROTOR_SPIN: f32 = 20.0;
+const HELIPCOPTER_HEIGHT: f32 = 20.0; 
 
 // == // Helper functions to make interacting with OpenGL a little bit prettier. You *WILL* need these! // == //
 
@@ -186,6 +192,7 @@ unsafe fn draw_scene(
     view_projection_matrix: &glm::Mat4,
     transformation_so_far: &glm::Mat4,
     transform_loc: i32,
+    model_loc: i32,
 ) {
     let translation = glm::translation(&node.position);
 
@@ -212,6 +219,12 @@ unsafe fn draw_scene(
             gl::FALSE,
             mvp.as_ptr(),
         );
+        gl::UniformMatrix4fv(
+            model_loc, 
+            1, 
+            gl::FALSE,
+            current_transformation.as_ptr()
+        );
 
         gl::BindVertexArray(node.vao_id);
 
@@ -224,7 +237,7 @@ unsafe fn draw_scene(
     }
 
     for &child in &node.children {
-        draw_scene(&*child, view_projection_matrix, &current_transformation, transform_loc);
+        draw_scene(&*child, view_projection_matrix, &current_transformation, transform_loc, model_loc);
     }
 }
 
@@ -380,7 +393,7 @@ fn main() {
 
         let helicopter_body_node = SceneNode::from_vao(helicopter_body_vao, helicopter.body.index_count);
         let helicopter_door_node = SceneNode::from_vao(helicopter_door_vao, helicopter.door.index_count);
-        let helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
+        let mut helicopter_main_rotor_node = SceneNode::from_vao(helicopter_main_rotor_vao, helicopter.main_rotor.index_count);
         let mut helicopter_tail_rotor_node = SceneNode::from_vao(helicopter_tail_rotor_vao, helicopter.tail_rotor.index_count);
 
         helicopter_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
@@ -429,12 +442,16 @@ fn main() {
             gl::GetUniformLocation(simple_shader.program_id, b"animation\0".as_ptr() as *const i8)
         };
 
+        let model_loc = unsafe {
+            gl::GetUniformLocation(simple_shader.program_id, b"model\0".as_ptr() as *const i8)
+        };
+
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
 
         let mut camera_x: f32 = 0.0;
-        let mut camera_y: f32 = 0.0;
-        let mut camera_z: f32 = 5.0;
+        let mut camera_y: f32 = 30.0;
+        let mut camera_z: f32 = 80.0;
         let mut camera_horizontal_angle: f32 = 0.0;
         let mut camera_vertical_angle: f32 = 0.0;
 
@@ -514,7 +531,11 @@ fn main() {
             }
 
             // == // Please compute camera transforms here (exercise 2 & 3)
-
+            helicopter_main_rotor_node.rotation.y = elapsed * MAIN_ROTOR_SPIN; 
+            helicopter_tail_rotor_node.rotation.x = elapsed * TAIL_ROTOR_SPIN;
+            let heading = toolbox::simple_heading_animation(elapsed);
+            helicopter_node.position = glm::vec3(heading.x, HELIPCOPTER_HEIGHT, heading.z);
+            helicopter_node.rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
 
             unsafe {
                 // Clear the color and depth buffers
@@ -560,7 +581,9 @@ fn main() {
                     &*root, 
                     &transform, 
                     &identity, 
-                    transform_loc);
+                    transform_loc,
+                    model_loc
+                );
             }
 
             // Display the new color buffer on the display
